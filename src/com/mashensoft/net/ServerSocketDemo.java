@@ -1,6 +1,5 @@
 package com.mashensoft.net;
 
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -302,7 +301,7 @@ public class ServerSocketDemo {
 			Object obj = null;
 			while ((obj = is.readObject()) != null) {
 				FileObject fo = (FileObject) obj;
-				FileOutputStream os = new FileOutputStream("d:/"+fo.fileName);
+				FileOutputStream os = new FileOutputStream("d:/" + fo.fileName);
 				os.write(fo.byteFile);
 				os.flush();
 				os.close();
@@ -310,15 +309,74 @@ public class ServerSocketDemo {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
 	}
 
+	/**
+	 * 接收客户端的文件,可以一直接收
+	 */
+	public static void test14() {
+		try {
+			ServerSocket ss = new ServerSocket(11111);
+			while (true) {
+				Socket socket = ss.accept();
+				ObjectInputStream is = new ObjectInputStream(socket.getInputStream());
+				Object obj = null;
+				while ((obj = is.readObject()) != null) {
+					FileObject fo = (FileObject) obj;
+					FileOutputStream os = new FileOutputStream("d:/" + fo.fileName);
+					os.write(fo.byteFile);
+					os.flush();
+					os.close();
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+
+	}
+	/**
+	 * 向服务器发送一个服务器端的文件路径，把它下载到客户端里来。
+	 * 对应SocketDemo里的test8
+	 * 
+	 */
+	public static void test15() {
+		try {
+			ServerSocket ss = new ServerSocket(11111);
+			while (true) {
+				Socket socket = ss.accept();
+				Object obj = null;
+				Scanner s = new Scanner(socket.getInputStream());
+				ObjectOutputStream os = new ObjectOutputStream(socket.getOutputStream());
+				while(s.hasNextLine()) {
+					String line = s.nextLine();
+					File file = new File(line);
+					if(file==null) {
+						continue;
+					}
+					FileInputStream fis = new FileInputStream(file);
+					int len = new Long(file.length()).intValue();
+					byte[] b = new byte[len];
+					fis.read(b);
+					FileObject fo = new FileObject(file.getName(), b);
+					os.writeObject(fo);
+					os.writeObject(null);
+					os.flush();
+				}
+				os.close();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
 	public static void main(String[] args) {
 		System.out.println("服务端已启动");
-		test13();
+		test15();
 	}
 }
 
@@ -337,7 +395,7 @@ class Person implements Serializable {
  * 3：客户端传输一个文件到服务端
  *
  */
-class FileObject  implements Serializable {
+class FileObject implements Serializable {
 	String fileName;
 	byte[] byteFile;
 
